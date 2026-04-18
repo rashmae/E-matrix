@@ -28,8 +28,9 @@ export const signInWithGoogle = async () => {
     const result = await signInWithPopup(auth, googleProvider);
     return result.user;
   } catch (error: any) {
+    // Only fall back to redirect for popup-specific issues, NOT unauthorized-domain
+    // (redirect also fails on unauthorized domain, causing a loop)
     if (
-      error.code === 'auth/unauthorized-domain' ||
       error.code === 'auth/popup-blocked' ||
       error.code === 'auth/popup-closed-by-user'
     ) {

@@ -29,7 +29,6 @@ export const signInWithGoogle = async () => {
     return result.user;
   } catch (error: any) {
     if (
-      error.code === 'auth/unauthorized-domain' ||
       error.code === 'auth/popup-blocked' ||
       error.code === 'auth/popup-closed-by-user'
     ) {
