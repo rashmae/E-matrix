@@ -1,6 +1,12 @@
 import { GoogleGenAI } from "@google/genai";
 
-const ai = new GoogleGenAI({ apiKey: (process.env as any).GEMINI_API_KEY });
+function getClient() {
+  const apiKey = (process.env as any).GEMINI_API_KEY;
+  if (!apiKey) {
+    throw new Error("GEMINI_API_KEY is not configured");
+  }
+  return new GoogleGenAI({ apiKey });
+}
 
 export async function generateStudyPlan(currentProgress: any, subjects: any[]) {
   const prompt = `
@@ -20,6 +26,7 @@ export async function generateStudyPlan(currentProgress: any, subjects: any[]) {
   `;
 
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
@@ -46,6 +53,7 @@ export async function askQuestion(question: string, context: string) {
   `;
   
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt
@@ -70,6 +78,7 @@ export async function generateQuiz(subjectName: string) {
   `;
   
   try {
+    const ai = getClient();
     const response = await ai.models.generateContent({
       model: "gemini-3-flash-preview",
       contents: prompt,
