@@ -1,0 +1,81 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "A student or admin user of the IE Matrix system.",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string", "description": "Firebase Auth UID" },
+        "fullName": { "type": "string", "description": "Full name of the student" },
+        "idNumber": { "type": "string", "description": "CTU Student ID Number" },
+        "email": { "type": "string", "description": "Email address" },
+        "role": { "type": "string", "enum": ["student", "admin"], "description": "User role" },
+        "lastLogin": { "type": "string", "format": "date-time", "description": "Last login timestamp" },
+        "progress": { "type": "object", "description": "Subject completion status map" }
+      },
+      "required": ["uid", "fullName", "idNumber", "role"]
+    },
+    "SubjectRating": {
+      "title": "Subject Rating",
+      "description": "A student's rating and feedback for a specific subject.",
+      "type": "object",
+      "properties": {
+        "subjectId": { "type": "string", "description": "ID of the subject being rated" },
+        "userId": { "type": "string", "description": "UID of the student" },
+        "userName": { "type": "string", "description": "Name of the student" },
+        "rating": { "type": "number", "description": "Star rating (1-5)" },
+        "feedback": { "type": "string", "description": "Optional text feedback" },
+        "createdAt": { "type": "string", "format": "date-time", "description": "When the rating was submitted" }
+      },
+      "required": ["subjectId", "userId", "rating", "createdAt"]
+    },
+    "StudyGroup": {
+      "title": "Study Group",
+      "description": "A collaborative group centered around a subject.",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "subjectCode": { "type": "string" },
+        "members": { "type": "array", "items": { "type": "string" } },
+        "creatorId": { "type": "string" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["name", "subjectCode", "creatorId"]
+    },
+    "Question": {
+      "title": "Forum Question",
+      "description": "A peer Q&A post.",
+      "type": "object",
+      "properties": {
+        "title": { "type": "string" },
+        "content": { "type": "string" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "subjectTag": { "type": "string" },
+        "votes": { "type": "number" },
+        "answerCount": { "type": "number" },
+        "createdAt": { "type": "string", "format": "date-time" }
+      },
+      "required": ["title", "userId", "createdAt"]
+    }
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": "User",
+      "description": "User profile and progress data."
+    },
+    "/ratings/{ratingId}": {
+      "schema": "SubjectRating",
+      "description": "Collection of all subject ratings."
+    },
+    "/studyGroups/{groupId}": {
+      "schema": "StudyGroup",
+      "description": "Collaborative study circles."
+    },
+    "/questions/{questionId}": {
+      "schema": "Question",
+      "description": "Peer Q&A platform."
+    }
+  }
+}
