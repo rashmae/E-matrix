@@ -5,19 +5,19 @@
 
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
-import Login from './pages/Login';
-import Dashboard from './pages/Dashboard';
-import Catalog from './pages/Catalog';
-import SubjectDetail from './pages/SubjectDetail';
-import Progress from './pages/Progress';
-import Bulletin from './pages/Bulletin';
-import Calendar from './pages/Calendar';
-import Resources from './pages/Resources';
-import Profile from './pages/Profile';
-import AdminDashboard from './pages/AdminDashboard';
-import SpotlightDemo from './pages/SpotlightDemo';
-import StudyTools from './pages/StudyTools';
-import AIAssistant from './components/AIAssistant';
+import Login from './Login';
+import Dashboard from './Dashboard';
+import Catalog from './Catalog';
+import SubjectDetail from './SubjectDetail';
+import Progress from './Progress';
+import Bulletin from './Bulletin';
+import Calendar from './Calendar';
+import Resources from './Resources';
+import Profile from './Profile';
+import AdminDashboard from './AdminDashboard';
+import SpotlightDemo from './SpotlightDemo';
+import StudyTools from './StudyTools';
+import AIAssistant from './AIAssistant';
 
 export default function App() {
   return (
@@ -48,4 +48,3 @@ export default function App() {
     </Router>
   );
 }
-
