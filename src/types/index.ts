@@ -10,6 +10,7 @@ export interface User {
   idNumber: string;
   email?: string;
   role?: 'student' | 'admin';
+  yearLevel?: YearLevel;
   loginTime: string;
   photoURL?: string;
 }

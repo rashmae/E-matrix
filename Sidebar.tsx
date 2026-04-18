@@ -14,6 +14,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { User as UserType } from '@/src/types';
+import { clearSession } from '@/src/lib/session';
 
 interface SidebarProps {
   user: UserType | null;
@@ -36,7 +37,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('ie_matrix_session');
+    clearSession();
     navigate('/login');
   };
 

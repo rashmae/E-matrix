@@ -55,3 +55,31 @@ The `vite.config.ts` has custom aliases to handle the flat file structure:
 
 ## Firebase Configuration
 Firebase is configured via `firebase-applet-config.json` in the root (and mirrored in `src/lib/`).
+
+## Session Management
+Centralized via `src/lib/session.ts` which exposes:
+- `getSession()` — reads from sessionStorage first, falls back to localStorage
+- `setSession(data)` — writes to both storages for cross-tab compatibility
+- `updateSession(partial)` — merges partial data into existing session
+- `clearSession()` — removes from both storages (used on logout)
+
+All logout handlers (`Sidebar.tsx`, `Profile.tsx`, `src/` mirrors) import from this utility. Session key: `ie_matrix_session`.
+
+## Authentication Flow
+- **Primary**: Google popup sign-in (`signInWithGoogle`)
+- **Fallback**: Google redirect sign-in (handles Replit's iframe/cross-origin restrictions)
+- Pending login data (fullName, idNumber, yearLevel) is stored in `sessionStorage` under `ie_matrix_pending_login` before redirect and restored after `getGoogleRedirectResult()` resolves
+- **Auth domain fix**: If `auth/unauthorized-domain` error occurs, the current Replit domain must be added to Firebase Console → Authentication → Settings → Authorized Domains
+
+## User Data Model
+Users stored in Firestore `users/{uid}`:
+- `uid`, `fullName`, `idNumber`, `email`, `role` ('student' | 'admin')
+- `yearLevel` — one of '1st Year', '2nd Year', '3rd Year', '4th Year' (enforced by Firestore rules)
+- `photoURL`, `lastLogin`, `createdAt`
+
+Admin email: `rashmae26@gmail.com`
+
+## Security
+- `firestore.rules` enforces: authentication, data ownership, yearLevel validation, role protection
+- Users cannot escalate their own role; only admins can change roles
+- Resources are readable only if `isPublic == true` or owned by the user

@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     // ===============================================================
-    // Assumed Data Model
+    // Data Model
     // ===============================================================
     //
     // Collection: users
@@ -13,66 +13,19 @@ service cloud.firestore {
     //   - idNumber: string (required)
     //   - email: string (optional)
     //   - role: string (required, 'student' | 'admin')
+    //   - yearLevel: string (required for students, '1st Year'|'2nd Year'|'3rd Year'|'4th Year')
     //   - lastLogin: timestamp (optional)
-    //   - progress: map (optional)
+    //   - createdAt: timestamp (optional)
+    //   - photoURL: string (optional)
     //
     // Collection: ratings
-    // Document ID: auto-generated
-    // Fields:
-    //   - subjectId: string (required)
-    //   - userId: string (required)
-    //   - userName: string (required)
-    //   - rating: number (required, 1-5)
-    //   - feedback: string (optional)
-    //   - createdAt: timestamp (required)
-    //
     // Collection: studyGroups
-    // Document ID: auto-generated
-    // Fields:
-    //   - name: string (required)
-    //   - description: string (optional)
-    //   - subjectCode: string (required)
-    //   - members: array of strings (required, list of UIDs)
-    //   - creatorId: string (required, creator's UID)
-    //   - createdAt: timestamp (required)
-    //
     // Collection: questions
-    // Document ID: auto-generated
-    // Fields:
-    //   - title: string (required)
-    //   - content: string (optional)
-    //   - userId: string (required)
-    //   - userName: string (required)
-    //   - subjectTag: string (optional)
-    //   - votes: number (required)
-    //   - answerCount: number (required)
-    //   - createdAt: timestamp (required)
-    //
     // Collection: resources
-    // Document ID: auto-generated
-    // Fields:
-    //   - title: string (required)
-    //   - subjectId: string (required)
-    //   - userId: string (required)
-    //   - userName: string (required)
-    //   - type: string (required)
-    //   - url: string (required)
-    //   - fileName: string (optional)
-    //   - isPublic: bool (required)
-    //   - createdAt: timestamp (required)
-    //
     // Collection: userProgress
-    // Document ID: {userId}
-    // Fields:
-    //   - progressMap: map (required)
-    //   - updatedAt: timestamp (required)
     //
     // ===============================================================
 
-    // ===============================================================
-    // Helper Functions
-    // ===============================================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -82,9 +35,26 @@ service cloud.firestore {
     }
 
     function isAdmin() {
-      return isAuthenticated() && 
+      return isAuthenticated() &&
         (get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin' ||
          (request.auth.token.email == "rashmae26@gmail.com" && request.auth.token.email_verified == true));
+    }
+
+    function isValidYearLevel(level) {
+      return level in ['1st Year', '2nd Year', '3rd Year', '4th Year'];
+    }
+
+    function isValidUser(data) {
+      return data.keys().hasAll(['uid', 'fullName', 'idNumber', 'role', 'yearLevel']) &&
+             data.uid is string && data.uid.size() > 0 &&
+             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
+             data.idNumber is string && data.idNumber.size() > 0 && data.idNumber.size() < 20 &&
+             data.role in ['student', 'admin'] &&
+             isValidYearLevel(data.yearLevel);
+    }
+
+    function isValidUserUpdate(data) {
+      return data.uid is string && data.uid.size() > 0;
     }
 
     function isValidResource(data) {
@@ -100,14 +70,6 @@ service cloud.firestore {
       return data.keys().hasAll(['progressMap', 'updatedAt']) &&
              data.progressMap is map &&
              data.updatedAt is timestamp;
-    }
-
-    function isValidUser(data) {
-      return data.keys().hasAll(['uid', 'fullName', 'idNumber', 'role']) &&
-             data.uid is string && data.uid.size() > 0 &&
-             data.fullName is string && data.fullName.size() > 0 && data.fullName.size() < 100 &&
-             data.idNumber is string && data.idNumber.size() > 0 && data.idNumber.size() < 20 &&
-             data.role in ['student', 'admin'];
     }
 
     function isValidRating(data) {
@@ -136,16 +98,21 @@ service cloud.firestore {
              data.createdAt is timestamp;
     }
 
-    // ===============================================================
-    // Rules
-    // ===============================================================
-
+    // Users: only owner or admin can read; creation requires valid data;
+    // updates preserve role unless admin
     match /users/{userId} {
       allow read: if isOwner(userId) || isAdmin();
-      allow create: if isAuthenticated() && isValidUser(request.resource.data) && 
-                    (isOwner(userId) && request.resource.data.role == 'student' || isAdmin());
-      allow update: if isAuthenticated() && isValidUser(request.resource.data) &&
-                    ((isOwner(userId) && request.resource.data.role == resource.data.role) || isAdmin());
+      allow create: if isAuthenticated() &&
+                       isOwner(userId) &&
+                       isValidUser(request.resource.data) &&
+                       (request.resource.data.role == 'student' || isAdmin());
+      allow update: if isAuthenticated() && (
+                       (isOwner(userId) &&
+                        request.resource.data.role == resource.data.role &&
+                        isValidUserUpdate(request.resource.data)) ||
+                       isAdmin()
+                    );
+      allow delete: if isAdmin();
     }
 
     match /ratings/{ratingId} {
@@ -158,7 +125,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidStudyGroup(request.resource.data);
       allow update: if isAuthenticated() && (
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) && 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['members']) &&
          request.resource.data.members.hasAll(resource.data.members)) ||
         isAdmin()
       );
@@ -169,7 +136,7 @@ service cloud.firestore {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isValidQuestion(request.resource.data);
       allow update: if isAuthenticated() && (
-        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']) && 
+        (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['votes']) &&
          math.abs(request.resource.data.votes - resource.data.votes) == 1) ||
         (request.resource.data.userId == request.auth.uid && isValidQuestion(request.resource.data)) ||
         isAdmin()
@@ -178,9 +145,16 @@ service cloud.firestore {
     }
 
     match /resources/{resourceId} {
-      allow read: if isAuthenticated() && (resource.data.isPublic == true || resource.data.userId == request.auth.uid || isAdmin());
+      allow read: if isAuthenticated() && (
+        resource.data.isPublic == true ||
+        resource.data.userId == request.auth.uid ||
+        isAdmin()
+      );
       allow create: if isAuthenticated() && isValidResource(request.resource.data);
-      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid && isValidResource(request.resource.data) || isAdmin());
+      allow update: if isAuthenticated() && (
+        (resource.data.userId == request.auth.uid && isValidResource(request.resource.data)) ||
+        isAdmin()
+      );
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid || isAdmin());
     }
 

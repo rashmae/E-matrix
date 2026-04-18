@@ -8,6 +8,7 @@ import { toast } from 'sonner';
 import { SplineScene } from '@/components/ui/splite';
 import { Spotlight } from '@/components/ui/spotlight';
 import { auth, db, signInWithGoogle } from '@/src/lib/firebase';
+import { getSession, setSession } from '@/src/lib/session';
 import { doc, setDoc, getDoc, serverTimestamp } from 'firebase/firestore';
 import { LogIn } from 'lucide-react';
 import ThemeToggle from '@/src/components/ThemeToggle';

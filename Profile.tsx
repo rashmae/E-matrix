@@ -22,6 +22,7 @@ import {
 import Sidebar from '@/src/components/layout/Sidebar';
 import BottomNav from '@/src/components/layout/BottomNav';
 import { User as UserType } from '@/src/types/index';
+import { getSession, updateSession, clearSession } from '@/src/lib/session';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { LiquidButton } from '@/components/ui/liquid-glass';
@@ -39,11 +40,11 @@ export default function Profile() {
   const [theme, setTheme] = useState<'light' | 'dark'>('dark');
 
   useEffect(() => {
-    const session = localStorage.getItem('ie_matrix_session');
+    const session = getSession();
     if (!session) {
       navigate('/login');
     } else {
-      setUser(JSON.parse(session));
+      setUser(session as any);
     }
 
     const savedTheme = localStorage.getItem('theme') as 'light' | 'dark' | null;
@@ -60,7 +61,7 @@ export default function Profile() {
   };
 
   const handleLogout = () => {
-    localStorage.removeItem('ie_matrix_session');
+    clearSession();
     navigate('/login');
   };
 
@@ -68,7 +69,7 @@ export default function Profile() {
     if (!user) return;
     const updatedUser = { ...user, photoURL: photoData };
     setUser(updatedUser);
-    localStorage.setItem('ie_matrix_session', JSON.stringify(updatedUser));
+    updateSession({ photoURL: photoData });
     toast.success('Profile photo updated successfully!');
   };
 

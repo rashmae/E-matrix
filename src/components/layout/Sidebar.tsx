@@ -13,6 +13,7 @@ import {
   ShieldCheck
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { clearSession } from '@/src/lib/session';
 import { User as UserType } from '@/src/types';
 
 interface SidebarProps {
@@ -36,7 +37,7 @@ export default function Sidebar({ user }: SidebarProps) {
   const navigate = useNavigate();
 
   const handleLogout = () => {
-    localStorage.removeItem('ie_matrix_session');
+    clearSession();
     navigate('/login');
   };
 
