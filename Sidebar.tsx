@@ -10,7 +10,8 @@ import {
   CalendarDays,
   LogOut,
   User,
-  ShieldCheck
+  ShieldCheck,
+  Library
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { User as UserType } from '@/src/types';
@@ -23,6 +24,7 @@ interface SidebarProps {
 const navItems = [
   { name: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Course Catalog', icon: BookOpen, path: '/catalog' },
+  { name: 'Syllabus Library', icon: Library, path: '/syllabus' },
   { name: 'Study Hub', icon: BrainCircuit, path: '/study' },
   { name: 'My Progress', icon: TrendingUp, path: '/progress' },
   { name: 'Study Resources', icon: FolderOpen, path: '/resources' },

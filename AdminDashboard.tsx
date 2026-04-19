@@ -15,10 +15,13 @@ import {
   ExternalLink,
   ArrowUpDown,
   ArrowUp,
-  ArrowDown
+  ArrowDown,
+  BookOpen,
+  Database,
+  Loader2
 } from 'lucide-react';
 import { db } from '@/src/lib/firebase';
-import { collection, query, getDocs, orderBy, limit } from 'firebase/firestore';
+import { collection, query, getDocs, orderBy, limit, doc, setDoc, Timestamp } from 'firebase/firestore';
 import { User as UserType } from '@/src/types/index';
 import Sidebar from '@/src/components/layout/Sidebar';
 import BottomNav from '@/src/components/layout/BottomNav';
@@ -28,6 +31,8 @@ import { Badge } from '@/components/ui/badge';
 import { LiquidButton } from '@/components/ui/liquid-glass';
 import { cn } from '@/lib/utils';
 import { toast } from 'sonner';
+import { PDF_MAP, SUBJECTS_DATA } from './syllabusData';
+
 
 export default function AdminDashboard() {
   const [admin, setAdmin] = useState<UserType | null>(null);
@@ -35,6 +40,8 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [seeding, setSeeding] = useState(false);
+  const [seedResult, setSeedResult] = useState<{ created: number; withSyllabus: number } | null>(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -81,6 +88,36 @@ export default function AdminDashboard() {
 
   const toggleSort = () => {
     setSortOrder(prev => prev === 'asc' ? 'desc' : 'asc');
+  };
+
+  const seedSubjects = async () => {
+    setSeeding(true);
+    setSeedResult(null);
+    let created = 0;
+    let withSyllabus = 0;
+    const uploadedAt = Timestamp.now();
+    try {
+      for (const subject of SUBJECTS_DATA) {
+        const fileId = PDF_MAP[subject.id] ?? null;
+        const syllabusURL = fileId ? `https://drive.google.com/file/d/${fileId}/preview` : null;
+        const isAvailable = syllabusURL !== null;
+        await setDoc(doc(collection(db, 'subjects'), subject.id), {
+          ...subject,
+          syllabusURL,
+          isAvailable,
+          uploadedAt,
+        });
+        created++;
+        if (isAvailable) withSyllabus++;
+      }
+      setSeedResult({ created, withSyllabus });
+      toast.success(`Seeded ${created} subjects — ${withSyllabus} with syllabus PDF.`);
+    } catch (err: any) {
+      console.error('Seeding error:', err);
+      toast.error('Seeding failed: ' + (err?.message || 'Unknown error'));
+    } finally {
+      setSeeding(false);
+    }
   };
 
   const filteredUsers = users.filter(u => 
@@ -271,6 +308,89 @@ export default function AdminDashboard() {
             </div>
           </CardContent>
         </Card>
+
+        {/* Syllabus Library Seeding */}
+        <div className="mt-10">
+          <Card className="neumorphic-card border-none overflow-hidden">
+            <CardHeader className="border-b border-foreground/5 bg-foreground/[0.02] p-8">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-ctu-gold to-ctu-maroon flex items-center justify-center">
+                    <BookOpen size={20} className="text-white" />
+                  </div>
+                  <div>
+                    <CardTitle className="text-2xl font-bold">Syllabus Library</CardTitle>
+                    <p className="text-sm text-foreground/50 mt-0.5">Seed all IE subjects + Google Drive PDFs to Firestore</p>
+                  </div>
+                </div>
+                <button
+                  onClick={seedSubjects}
+                  disabled={seeding}
+                  className={cn(
+                    "flex items-center gap-2 px-6 py-3 rounded-2xl text-sm font-bold transition-all",
+                    seeding
+                      ? "neumorphic-pressed text-foreground/40 cursor-not-allowed"
+                      : "bg-gradient-to-r from-ctu-gold to-ctu-maroon text-white shadow-lg hover:shadow-ctu-maroon/30 hover:scale-[1.02] active:scale-[0.98]"
+                  )}
+                >
+                  {seeding ? (
+                    <>
+                      <Loader2 size={16} className="animate-spin" />
+                      Seeding...
+                    </>
+                  ) : (
+                    <>
+                      <Database size={16} />
+                      Seed Subjects to Firestore
+                    </>
+                  )}
+                </button>
+              </div>
+            </CardHeader>
+            <CardContent className="p-8">
+              {seedResult ? (
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <div className="neumorphic-raised p-6 rounded-2xl text-center">
+                    <p className="text-3xl font-bold text-foreground">{seedResult.created}</p>
+                    <p className="text-xs font-bold text-foreground/40 uppercase tracking-wider mt-1">Total Subjects Created</p>
+                  </div>
+                  <div className="neumorphic-raised p-6 rounded-2xl text-center">
+                    <p className="text-3xl font-bold text-green-500">{seedResult.withSyllabus}</p>
+                    <p className="text-xs font-bold text-foreground/40 uppercase tracking-wider mt-1">With Syllabus PDF</p>
+                  </div>
+                  <div className="neumorphic-raised p-6 rounded-2xl text-center">
+                    <p className="text-3xl font-bold text-red-400">{seedResult.created - seedResult.withSyllabus}</p>
+                    <p className="text-xs font-bold text-foreground/40 uppercase tracking-wider mt-1">Missing Syllabus</p>
+                  </div>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  <p className="text-sm text-foreground/60 font-medium">
+                    This will create or overwrite <strong className="text-foreground">{SUBJECTS_DATA.length} subjects</strong> in the Firestore{' '}
+                    <code className="text-ctu-gold bg-ctu-gold/10 px-2 py-0.5 rounded-lg text-xs font-bold">subjects</code> collection, including:
+                  </p>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="neumorphic-raised p-4 rounded-2xl text-center">
+                      <p className="text-2xl font-bold text-foreground">{SUBJECTS_DATA.length}</p>
+                      <p className="text-xs text-foreground/40 font-bold uppercase tracking-wider mt-1">Total Subjects</p>
+                    </div>
+                    <div className="neumorphic-raised p-4 rounded-2xl text-center">
+                      <p className="text-2xl font-bold text-green-500">{Object.keys(PDF_MAP).length}</p>
+                      <p className="text-xs text-foreground/40 font-bold uppercase tracking-wider mt-1">With PDF Syllabus</p>
+                    </div>
+                    <div className="neumorphic-raised p-4 rounded-2xl text-center">
+                      <p className="text-2xl font-bold text-red-400">{SUBJECTS_DATA.length - Object.keys(PDF_MAP).length}</p>
+                      <p className="text-xs text-foreground/40 font-bold uppercase tracking-wider mt-1">Without PDF Yet</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-foreground/30 font-medium">
+                    PDFs are sourced from the IE-MATRIX-SYLLABI Google Drive folder. Safe to run multiple times (uses setDoc/upsert).
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </main>
 
       <BottomNav />

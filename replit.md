@@ -24,6 +24,9 @@ All source files are in the **root directory** (flat structure from GitHub impor
 - `constants.ts` — Static data (IE subjects, announcements, etc.)
 - `index.ts` — TypeScript type definitions
 - `gemini.ts`, `geminiService.ts` — AI integration
+- `syllabusData.ts` — Shared syllabus curriculum data (PDF_MAP, SUBJECTS_DATA, buildStaticSubjects)
+- `SyllabusLibrary.tsx` — Syllabus Library page (subject grid + PDF preview modal)
+- `firebase-blueprint.json` — Firebase Firestore schema definition for Replit integration
 
 ### Supporting `src/` structure (aliases)
 To support `@/src/...` imports, files are also mirrored in:
@@ -135,7 +138,18 @@ Users stored in Firestore `users/{uid}`:
 
 Admin email: `rashmae26@gmail.com`
 
+## Syllabus Library
+- Route: `/syllabus` — available in both Sidebar and BottomNav
+- Displays all 68 IE curriculum subjects grouped by year level with search + filters
+- Shows "Available" / "Missing" badges based on whether a Google Drive PDF syllabus exists
+- **Static fallback**: `syllabusData.ts` provides the full curriculum list + 15 PDF file IDs immediately without Firestore
+- **Firestore upgrade**: Admin can seed the `subjects` collection via the Admin Portal Seed button
+- PDF previews rendered in-app using Google Drive `/preview` embed URLs
+- 15 syllabi already mapped to Google Drive file IDs in `syllabusData.ts` (PDF_MAP)
+- To activate live Firestore data: (1) deploy updated `firestore.rules` via Firebase Console, (2) log in as admin and click "Seed Subjects to Firestore" in Admin Portal
+
 ## Security
 - `firestore.rules` enforces: authentication, data ownership, yearLevel validation, role protection
 - Users cannot escalate their own role; only admins can change roles
 - Resources are readable only if `isPublic == true` or owned by the user
+- `/subjects/{subjectId}` — readable by any authenticated user, writable by admin only

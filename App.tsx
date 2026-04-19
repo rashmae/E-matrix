@@ -19,6 +19,7 @@ import SpotlightDemo from './SpotlightDemo';
 import StudyTools from './StudyTools';
 import StudyNotebook from './StudyNotebook';
 import AIAssistant from './AIAssistant';
+import SyllabusLibrary from './SyllabusLibrary';
 
 export default function App() {
   return (
@@ -40,6 +41,7 @@ export default function App() {
         <Route path="/bulletin" element={<Bulletin />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/resources" element={<Resources />} />
+        <Route path="/syllabus" element={<SyllabusLibrary />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/admin" element={<AdminDashboard />} />
         <Route path="/demo" element={<SpotlightDemo />} />

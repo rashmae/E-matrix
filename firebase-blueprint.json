@@ -58,6 +58,23 @@
         "createdAt": { "type": "string", "format": "date-time" }
       },
       "required": ["title", "userId", "createdAt"]
+    },
+    "SyllabusSubject": {
+      "title": "Syllabus Subject",
+      "description": "An IE curriculum subject with optional Google Drive syllabus PDF link.",
+      "type": "object",
+      "properties": {
+        "subjectCode": { "type": "string", "description": "Official subject code (e.g. IE-PC 212)" },
+        "subjectName": { "type": "string", "description": "Full name of the subject" },
+        "units": { "type": "number", "description": "Number of academic units" },
+        "yearLevel": { "type": "string", "enum": ["1st", "2nd", "3rd", "4th"], "description": "Year level" },
+        "term": { "type": "string", "description": "Semester/term (e.g. 1st Semester)" },
+        "description": { "type": "string", "description": "Short subject description" },
+        "syllabusURL": { "type": "string", "description": "Google Drive embed/preview URL or null" },
+        "isAvailable": { "type": "boolean", "description": "Whether a syllabus PDF is available" },
+        "uploadedAt": { "type": "string", "format": "date-time", "description": "When the syllabus was uploaded" }
+      },
+      "required": ["subjectCode", "subjectName", "units", "yearLevel", "term", "isAvailable"]
     }
   },
   "firestore": {
@@ -76,6 +93,10 @@
     "/questions/{questionId}": {
       "schema": "Question",
       "description": "Peer Q&A platform."
+    },
+    "/subjects/{subjectId}": {
+      "schema": "SyllabusSubject",
+      "description": "IE curriculum subjects with syllabus PDF links. Readable by all authenticated users, writable by admin only."
     }
   }
 }

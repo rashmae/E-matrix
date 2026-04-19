@@ -4,18 +4,18 @@ import {
   LayoutDashboard, 
   BookOpen, 
   TrendingUp, 
-  Megaphone, 
   User,
-  Sparkles
+  Sparkles,
+  Library
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
   { name: 'Home', icon: LayoutDashboard, path: '/dashboard' },
   { name: 'Catalog', icon: BookOpen, path: '/catalog' },
+  { name: 'Syllabus', icon: Library, path: '/syllabus' },
   { name: 'Study', icon: Sparkles, path: '/study' },
   { name: 'Progress', icon: TrendingUp, path: '/progress' },
-  { name: 'Board', icon: Megaphone, path: '/bulletin' },
   { name: 'Profile', icon: User, path: '/profile' },
 ];
 

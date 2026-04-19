@@ -162,5 +162,13 @@ service cloud.firestore {
       allow read: if isOwner(userId) || isAdmin();
       allow write: if isOwner(userId) && isValidUserProgress(request.resource.data);
     }
+
+    // Subjects / Syllabus Library
+    // Admins can create, update, and delete subjects.
+    // Any authenticated user can read.
+    match /subjects/{subjectId} {
+      allow read: if isAuthenticated();
+      allow create, update, delete: if isAdmin();
+    }
   }
 }
