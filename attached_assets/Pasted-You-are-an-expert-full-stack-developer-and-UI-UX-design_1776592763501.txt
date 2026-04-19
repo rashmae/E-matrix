@@ -1,0 +1,232 @@
+You are an expert full-stack developer and UI/UX designer building a student academic
+platform app. The app has the following sections: Auth/Onboarding, Dashboard, Course
+Catalog, Subject Detail Pages, and Study Hub. Below are 7 specific features and
+improvements to implement. Follow each specification precisely.
+────────────────────────────────────────
+FEATURE 1 — AUTO-AUTHENTICATION ONBOARDING
+────────────────────────────────────────
+Problem: New users currently have to manually copy credentials from the Firebase
+console to authenticate. This creates friction and confusion.
+Implement:
+On first app launch or sign-up, automatically provision and authenticate the user
+using Firebase Authentication behind the scenes (email/password or Google OAuth).
+Store the Firebase config securely in environment variables (FIREBASE_API_KEY,
+FIREBASE_AUTH_DOMAIN, FIREBASE_PROJECT_ID, etc.) so users never see or touch it.
+On successful registration, immediately redirect the user to their personalized
+dashboard without any intermediate configuration step.
+If using Google Sign-In, use Firebase's signInWithPopup or signInWithRedirect —
+the user just clicks "Continue with Google" and lands on their dashboard.
+Show a branded loading/welcome screen during auth initialization instead of a
+blank screen.
+Handle edge cases: expired tokens (auto-refresh), first-time users (create Firestore
+user document automatically), returning users (restore their session).
+Tech: Firebase Auth SDK v9+ modular API. Use onAuthStateChanged listener to gate
+dashboard rendering.
+────────────────────────────────────────
+FEATURE 2 — DASHBOARD SEARCH BAR + YEAR LEVEL FILTER FIX
+────────────────────────────────────────
+Problem: The search bar in the dashboard is not functioning, and the year level
+selector does nothing.
+Fix and enhance:
+Wire the search bar to a live/real-time filter that searches across: subject name,
+course code, professor name, and department — as the user types (debounce 300ms).
+The year level dropdown (1st Year, 2nd Year, 3rd Year, 4th Year, Graduate) must
+filter the displayed subjects/courses on the dashboard to only show content
+relevant to the selected year.
+Combine both filters simultaneously (search text AND year level).
+Add a small animated "No results found" empty state with a friendly illustration
+when nothing matches.
+Persist the last-used year level filter to localStorage so it survives page refresh.
+Add a visible "Clear filters" button that resets both inputs.
+Recommendation to optimize: Add a "Quick Filter" chip row below the search bar
+with one-tap options: "My Courses", "Favorites", "Upcoming Exams", "Recent" —
+these chips toggle on/off and combine with the search and year filters.
+────────────────────────────────────────
+FEATURE 3 — "RECOMMENDED FOR YOU" HORIZONTAL SCROLL FIX
+────────────────────────────────────────
+Problem: The horizontal scroll in the "Recommended for You" section of the dashboard
+is broken (not scrolling left).
+Fix:
+Ensure the scroll container uses: overflow-x: scroll; scroll-snap-type: x mandatory;
+-webkit-overflow-scrolling: touch; display: flex; flex-wrap: nowrap;
+Each card must have: scroll-snap-align: start; flex-shrink: 0;
+Add visible left/right arrow navigation buttons (< >) that programmatically scroll
+the container by one card width using scrollBy({ left: ±cardWidth, behavior: 'smooth' }).
+Show/hide the left arrow only when scroll position > 0; show/hide the right arrow
+only when not at the end.
+Support both mouse drag (via pointer events) and touch swipe.
+On mobile, hide the nav arrows and rely on native touch scroll.
+────────────────────────────────────────
+FEATURE 4 — COURSE CATALOG ADVANCED FILTERS + SORTING
+────────────────────────────────────────
+Current state: The course catalog has basic listing with no filter or sort capability.
+Implement a full filter and sort system:
+FILTER PANEL (collapsible sidebar or top drawer on mobile):
+Course Code: text input, partial match (e.g. typing "CS1" shows CS101, CS120...)
+Year Level: multi-select checkboxes (1st, 2nd, 3rd, 4th, Graduate)
+Semester: toggle chips (1st Sem, 2nd Sem, Summer, All)
+Subject Name: text search with autocomplete suggestions
+Department/College: dropdown populated from available data
+Units/Credits: range slider (1–6 units)
+Show only: toggles for "With Available Slots", "Favorites", "Has Reviews"
+SORT OPTIONS (dropdown or segmented control):
+Alphabetical A→Z / Z→A
+Highest Rated first
+Most Reviews first
+Newest Added
+Relevance (default when search query is active)
+DISPLAY:
+Show active filter count badge on the filter button (e.g. "Filters · 3")
+"Clear all filters" button visible when any filter is active
+Animate card list with a subtle fade/slide when filters change
+Show total result count: "Showing 24 of 148 courses"
+On mobile: filters open in a bottom sheet modal with "Apply" and "Reset" buttons
+DESIGN: Make the filter UI feel premium — use pill-shaped chip selectors, smooth
+transitions, color-coded active states, and a clean two-column card grid for results.
+────────────────────────────────────────
+FEATURE 5 — RATING REVIEWER LIST (WHO RATED THIS SUBJECT)
+────────────────────────────────────────
+Current state: Subject pages show star ratings but no information about who gave them.
+Implement:
+In the Rating section of each subject page, make the star display interactive.
+When a user taps/clicks the star rating display (or a "See all ratings" link below
+the stars), open a modal or expandable panel showing:
+· Each reviewer's display name (or anonymized as "Student #1234" if anonymous)
+· Their avatar/initials circle
+· Their individual star rating (rendered as filled stars)
+· Their written review/comment (if they left one)
+· The date they rated
+· A "Helpful?" thumbs-up vote on each review
+At the top of this list, show a rating breakdown bar chart:
+5 stars ████████ 42
+4 stars █████ 21
+3 stars ██ 8
+2 stars █ 3
+1 star ░ 1
+Allow filtering the reviewer list by star count (click a bar to filter to that rating).
+If a user has already rated, highlight their own review with a subtle accent border.
+Respect user privacy: allow users to rate anonymously (toggle in rating form);
+anonymous ratings show "Anonymous Student" with a generic avatar.
+────────────────────────────────────────
+FEATURE 6 — STUDY HUB REDESIGN & LAYOUT OPTIMIZATION
+────────────────────────────────────────
+Current state: Study Hub sub-features are poorly arranged and the space is not
+used efficiently.
+Redesign the Study Hub with this layout and hierarchy:
+LAYOUT:
+Top hero section: "Study Hub" title + motivational subtitle + current study streak
+badge (e.g. "🔥 5-day streak")
+Below hero: a 2×3 grid of feature cards (or 3×2 on tablet/desktop) with generous
+padding and breathing room between cards.
+CARD ORDER AND DESIGN:
+AI Advisor (primary/featured — spans full width or is visually larger)
+Icon: brain/sparkle · Subtitle: "Get instant academic guidance"
+Color accent: indigo/purple gradient pill badge saying "AI-Powered"
+Matrix Map
+Icon: grid/map · Subtitle: "Visualize your curriculum path"
+Study Group
+Icon: people · Subtitle: "Collaborate with classmates"
+Show live badge: "3 active sessions"
+Q&A Forum
+Icon: speech bubble · Subtitle: "Ask & answer academic questions"
+Show unread count badge if applicable
+Flashcards
+Icon: cards/stack · Subtitle: "Memorize with spaced repetition"
+Show "Last studied: 2h ago" micro-detail
+Practice Quiz
+Icon: checkmark/quiz · Subtitle: "Test your knowledge"
+Show "New quizzes available" badge if applicable
+DESIGN PRINCIPLES:
+Each card has a colored left-border accent or subtle colored icon background.
+Cards have hover/press animations (scale 1.02, subtle shadow lift).
+Use a consistent icon style (outlined, 28px).
+Section title "Study Hub" uses a large, bold, gradient text treatment.
+Background: soft gradient or mesh from the app's primary color family.
+Mobile: single column stack; Tablet: 2 columns; Desktop: 3 columns.
+────────────────────────────────────────
+FEATURE 7 — NOTEBOOKLM-STYLE FEATURE IN STUDY HUB
+────────────────────────────────────────
+Add a new "Study Notebook" feature inside Study Hub, replicating the core
+functionality of Google's NotebookLM. This is the most complex feature.
+CORE CAPABILITIES TO IMPLEMENT:
+A. SOURCE UPLOAD & MANAGEMENT
+Users can create a "Notebook" for each subject or topic.
+Each notebook accepts up to 10 sources per session:
+· PDF upload (parse with PDF.js or server-side)
+· Google Docs link (via Docs API or paste text)
+· Plain text / copy-paste
+· YouTube URL (extract transcript via YouTube Data API)
+· Website URL (fetch and extract readable content)
+Show source cards in a left sidebar with title, type icon, and page/word count.
+Allow users to enable/disable individual sources (checkbox toggle).
+Sources are stored per notebook in Firestore under the user's document.
+B. AI-GENERATED NOTEBOOK GUIDE (CENTER PANEL)
+When sources are added, auto-generate using the Gemini API:
+· A "Notebook Guide" — a structured summary of all sources combined
+· Key topics list (clickable, jumps to relevant source passage)
+· Suggested questions the user might want to explore
+· A timeline (if sources have temporal content)
+Display this in a clean, readable center panel with section headers.
+Add a "Regenerate" button to refresh the guide when sources change.
+C. AUDIO OVERVIEW (Deep Dive Podcast)
+Generate an "Audio Overview" — a realistic two-voice podcast-style conversation
+summarizing the notebook content, using the Gemini TTS API or Web Speech API.
+Show a player UI: play/pause button, waveform visualizer (animated bars),
+playback speed control (0.75×, 1×, 1.25×, 1.5×, 2×), and progress bar.
+Allow users to download the audio as an MP3.
+Show a transcript below the player (auto-scroll as audio plays).
+D. INLINE CHAT / Q&A (RIGHT PANEL)
+A chat interface grounded on the uploaded sources only.
+User types a question → AI answers using only the notebook's sources.
+Each AI response includes inline citations like [Source 1, p.4] that are
+clickable and highlight the relevant passage in the source.
+Support follow-up questions (maintain conversation context).
+"Copy response" and "Save to notes" buttons on each AI message.
+Show "Answer not found in sources" gracefully if the question goes outside scope.
+E. NOTEBOOK MANAGEMENT
+Users can create multiple notebooks (one per subject recommended).
+Notebook list on Study Hub home: shows title, source count, last edited date.
+Rename, duplicate, and delete notebooks.
+Share a notebook with classmates (generate a shareable link).
+TECH STACK FOR THIS FEATURE:
+Gemini API (gemini-1.5-pro or gemini-2.0-flash) for summarization and Q&A
+Gemini TTS or Web Speech API for audio
+Firebase Firestore for notebook/source storage
+Firebase Storage for uploaded PDFs
+PDF.js for client-side PDF text extraction
+Streaming responses for the chat (use Gemini streaming API)
+UI LAYOUT (three-panel, responsive):
+Mobile: tabbed (Sources | Guide | Chat)
+Tablet: two panels (Sources sidebar + Guide/Chat main)
+Desktop: three panels side by side (Sources | Guide | Chat)
+Header: Notebook title (editable inline) + source count + "Audio Overview" button
+────────────────────────────────────────
+GLOBAL DESIGN SYSTEM (apply to all features)
+────────────────────────────────────────
+Color palette: use the app's existing primary color; extend with semantic colors
+(success green, warning amber, error red, info blue).
+Typography: consistent type scale — Display 28px, H1 22px, H2 18px, H3 16px,
+Body 14px, Caption 12px.
+Spacing: 4px base unit grid (4, 8, 12, 16, 24, 32, 48px).
+Animations: 200–300ms ease-in-out for micro-interactions; 400ms for panel
+transitions. Respect prefers-reduced-motion.
+Accessibility: all interactive elements have aria-labels; color is never the only
+indicator; keyboard navigable; minimum 4.5:1 contrast ratio.
+Loading states: skeleton loaders (not spinners) for content areas; inline
+loading indicators for buttons.
+Error states: friendly illustrated empty states with actionable CTAs.
+Dark mode: full dark mode support using CSS custom properties / Tailwind dark:
+variant throughout.
+────────────────────────────────────────
+IMPLEMENTATION PRIORITY ORDER
+────────────────────────────────────────
+Feature 1 (Auth) — unblocks all other features
+Feature 3 (Scroll fix) — quick win, high visibility
+Feature 2 (Dashboard search) — core usability
+Feature 4 (Course filters) — core usability
+Feature 5 (Rating list) — engagement feature
+Feature 6 (Study Hub redesign) — sets up Feature 7
+Feature 7 (NotebookLM) — most complex, build last
+Begin by implementing Feature 1. After each feature is complete, confirm before
+proceeding to the next. Ask clarifying questions only if a technical decision
+could significantly change the architecture.

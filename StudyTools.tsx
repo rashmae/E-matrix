@@ -55,7 +55,7 @@ type QuizQuestion = { question: string; options: string[]; answerIndex: number; 
 
 export default function StudyTools() {
   const [user, setUser] = useState<User | null>(null);
-  const [activeTab, setActiveTab] = useState('advisor');
+  const [activeTab, setActiveTab] = useState('home');
   const [roadmap, setRoadmap] = useState<any[]>(() => {
     const saved = localStorage.getItem('ie_matrix_roadmap');
     return saved ? JSON.parse(saved) : [];
@@ -452,21 +452,26 @@ export default function StudyTools() {
       <Sidebar user={user} />
       
       <main className="flex-1 p-6 lg:p-10 pb-32 lg:pb-10 overflow-x-hidden">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
-          <div>
-            <h1 className="text-4xl frosted-header font-bold tracking-tight flex items-center gap-3">
-              Study Hub <Sparkles className="text-ctu-gold" size={28} />
-            </h1>
-            <p className="text-foreground/60 mt-1 text-sm font-medium">Elevate your learning with AI guidance and community support.</p>
-          </div>
+        <div className={cn(
+          "flex flex-col md:flex-row md:items-center justify-between gap-4 sm:gap-6",
+          activeTab === 'home' ? "mb-4" : "mb-8 sm:mb-10"
+        )}>
+          {activeTab !== 'home' && (
+            <div>
+              <h1 className="text-3xl sm:text-4xl frosted-header font-bold tracking-tight flex items-center gap-3">
+                Study Hub <Sparkles className="text-ctu-gold" size={24} />
+              </h1>
+              <p className="text-foreground/60 mt-1 text-sm font-medium">Elevate your learning with AI guidance and community support.</p>
+            </div>
+          )}
           
-          <div className="flex bg-background p-1 rounded-2xl neumorphic-raised">
+          <div className={cn("flex bg-background p-1 rounded-2xl neumorphic-raised", activeTab === 'home' && "ml-auto")}>
             <Dialog open={isNewGroupModalOpen} onOpenChange={setIsNewGroupModalOpen}>
-              <DialogTrigger>
-                <Button variant="ghost" className="rounded-xl text-xs font-bold gap-2">
+              <DialogTrigger render={
+                <button className="flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-bold text-foreground/60 hover:text-foreground transition-colors">
                   <Plus size={16} /> New Group
-                </Button>
-              </DialogTrigger>
+                </button>
+              } />
               <DialogContent className="sm:max-w-[425px] neumorphic-card border-none">
                 <DialogHeader>
                   <DialogTitle className="text-xl font-bold">Create Study Group</DialogTitle>
@@ -500,33 +505,42 @@ export default function StudyTools() {
           </div>
         </div>
 
-        <Tabs defaultValue="advisor" value={activeTab} onValueChange={setActiveTab} className="space-y-8">
-          <div className="overflow-x-auto no-scrollbar pb-2">
-            <TabsList className="bg-transparent h-auto p-0 gap-4">
-              {[
-                { id: 'advisor', label: 'AI Advisor', icon: BrainCircuit },
-                { id: 'map', label: 'Matrix Map', icon: BookOpen },
-                { id: 'groups', label: 'Study Groups', icon: Users },
-                { id: 'qa', label: 'Q&A Forum', icon: MessageSquare },
-                { id: 'flashcards', label: 'Flashcards', icon: Layers },
-                { id: 'quizzes', label: 'Practice Quiz', icon: Award },
-              ].map((tab) => (
+        <Tabs defaultValue="home" value={activeTab} onValueChange={setActiveTab} className="space-y-6 sm:space-y-8">
+          {activeTab !== 'home' && (
+            <div className="overflow-x-auto no-scrollbar pb-2">
+              <TabsList className="bg-transparent h-auto p-0 gap-2 sm:gap-4">
                 <TabsTrigger
-                  key={tab.id}
-                  value={tab.id}
-                  className={cn(
-                    "flex items-center gap-2 px-6 py-3 rounded-2xl text-xs font-bold transition-all border-none",
-                    activeTab === tab.id 
-                      ? "neumorphic-pressed text-ctu-gold scale-95" 
-                      : "neumorphic-raised text-foreground/40 hover:text-foreground"
-                  )}
+                  value="home"
+                  onClick={() => setActiveTab('home')}
+                  className="flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all border-none neumorphic-raised text-foreground/40 hover:text-foreground"
                 >
-                  <tab.icon size={16} />
-                  {tab.label}
+                  ← Hub
                 </TabsTrigger>
-              ))}
-            </TabsList>
-          </div>
+                {[
+                  { id: 'advisor', label: 'AI Advisor', icon: BrainCircuit },
+                  { id: 'map', label: 'Matrix Map', icon: BookOpen },
+                  { id: 'groups', label: 'Study Groups', icon: Users },
+                  { id: 'qa', label: 'Q&A Forum', icon: MessageSquare },
+                  { id: 'flashcards', label: 'Flashcards', icon: Layers },
+                  { id: 'quizzes', label: 'Practice Quiz', icon: Award },
+                ].map((tab) => (
+                  <TabsTrigger
+                    key={tab.id}
+                    value={tab.id}
+                    className={cn(
+                      "flex items-center gap-2 px-4 sm:px-6 py-2.5 sm:py-3 rounded-2xl text-xs font-bold transition-all border-none",
+                      activeTab === tab.id
+                        ? "neumorphic-pressed text-ctu-gold scale-95"
+                        : "neumorphic-raised text-foreground/40 hover:text-foreground"
+                    )}
+                  >
+                    <tab.icon size={14} />
+                    <span className="hidden sm:inline">{tab.label}</span>
+                  </TabsTrigger>
+                ))}
+              </TabsList>
+            </div>
+          )}
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -536,6 +550,165 @@ export default function StudyTools() {
               exit={{ opacity: 0, y: -20 }}
               transition={{ duration: 0.2 }}
             >
+              {/* ── STUDY HUB HOME ── */}
+              <TabsContent value="home" className="mt-0 space-y-8">
+                {/* Hero */}
+                <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-ctu-maroon/20 via-background to-ctu-gold/10 p-6 sm:p-8 lg:p-10 border border-foreground/5">
+                  <div className="absolute inset-0 opacity-[0.03]"
+                    style={{ backgroundImage: 'radial-gradient(circle, #000 1px, transparent 1px)', backgroundSize: '24px 24px' }} />
+                  <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-3 mb-2">
+                        <h2 className="text-3xl sm:text-4xl lg:text-5xl frosted-header font-bold tracking-tight">
+                          Study Hub
+                        </h2>
+                        <Sparkles className="text-ctu-gold" size={24} />
+                      </div>
+                      <p className="text-foreground/55 text-sm font-medium max-w-md">
+                        Your all-in-one academic companion. AI guidance, community, and smart learning tools.
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="neumorphic-pressed rounded-2xl px-4 py-3 text-center">
+                        <p className="text-2xl font-black text-ctu-gold">🔥 5</p>
+                        <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-wider mt-0.5">Day Streak</p>
+                      </div>
+                      <div className="neumorphic-pressed rounded-2xl px-4 py-3 text-center">
+                        <p className="text-2xl font-black text-foreground">{Object.values(progressMap).filter(p => p.status === 'done').length}</p>
+                        <p className="text-[10px] font-bold text-foreground/40 uppercase tracking-wider mt-0.5">Completed</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Feature Card Grid */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-5 lg:gap-6">
+                  {[
+                    {
+                      id: 'advisor',
+                      title: 'AI Advisor',
+                      subtitle: 'Get instant academic guidance',
+                      icon: BrainCircuit,
+                      badge: 'AI-Powered',
+                      badgeColor: 'bg-violet-500/15 text-violet-400',
+                      accent: 'border-l-violet-500',
+                      iconBg: 'bg-violet-500/10',
+                      iconColor: 'text-violet-400',
+                      featured: true,
+                    },
+                    {
+                      id: 'notebook',
+                      title: 'Study Notebook',
+                      subtitle: 'AI-powered source analysis & Q&A',
+                      icon: BookOpen,
+                      badge: 'New',
+                      badgeColor: 'bg-emerald-500/15 text-emerald-400',
+                      accent: 'border-l-emerald-500',
+                      iconBg: 'bg-emerald-500/10',
+                      iconColor: 'text-emerald-400',
+                      featured: false,
+                      link: '/study/notebook',
+                    },
+                    {
+                      id: 'map',
+                      title: 'Matrix Map',
+                      subtitle: 'Visualize your curriculum path',
+                      icon: Layers,
+                      badge: null,
+                      badgeColor: '',
+                      accent: 'border-l-ctu-gold',
+                      iconBg: 'bg-ctu-gold/10',
+                      iconColor: 'text-ctu-gold',
+                      featured: false,
+                    },
+                    {
+                      id: 'groups',
+                      title: 'Study Groups',
+                      subtitle: 'Collaborate with classmates',
+                      icon: Users,
+                      badge: `${studyGroups.length} active`,
+                      badgeColor: 'bg-blue-500/15 text-blue-400',
+                      accent: 'border-l-blue-500',
+                      iconBg: 'bg-blue-500/10',
+                      iconColor: 'text-blue-400',
+                      featured: false,
+                    },
+                    {
+                      id: 'qa',
+                      title: 'Q&A Forum',
+                      subtitle: 'Ask & answer academic questions',
+                      icon: MessageSquare,
+                      badge: questions.length > 0 ? `${questions.length} posts` : null,
+                      badgeColor: 'bg-orange-500/15 text-orange-400',
+                      accent: 'border-l-orange-500',
+                      iconBg: 'bg-orange-500/10',
+                      iconColor: 'text-orange-400',
+                      featured: false,
+                    },
+                    {
+                      id: 'flashcards',
+                      title: 'Flashcards',
+                      subtitle: 'Memorize with spaced repetition',
+                      icon: Layers,
+                      badge: null,
+                      badgeColor: '',
+                      accent: 'border-l-pink-500',
+                      iconBg: 'bg-pink-500/10',
+                      iconColor: 'text-pink-400',
+                      featured: false,
+                    },
+                    {
+                      id: 'quizzes',
+                      title: 'Practice Quiz',
+                      subtitle: 'Test your knowledge with AI',
+                      icon: Award,
+                      badge: 'New Quizzes',
+                      badgeColor: 'bg-ctu-maroon/15 text-ctu-maroon',
+                      accent: 'border-l-ctu-maroon',
+                      iconBg: 'bg-ctu-maroon/10',
+                      iconColor: 'text-ctu-maroon',
+                      featured: false,
+                    },
+                  ].map((card, i) => (
+                    <motion.button
+                      key={card.id}
+                      initial={{ opacity: 0, y: 16 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.06 }}
+                      onClick={() => {
+                        if (card.link) { navigate(card.link); return; }
+                        setActiveTab(card.id);
+                      }}
+                      className={cn(
+                        "group text-left neumorphic-card p-5 sm:p-6 rounded-3xl hover:scale-[1.02] transition-all duration-200 border-l-4",
+                        card.accent,
+                        card.featured && "sm:col-span-2 lg:col-span-1"
+                      )}
+                    >
+                      <div className="flex items-start justify-between mb-4">
+                        <div className={cn("w-11 h-11 rounded-2xl flex items-center justify-center", card.iconBg)}>
+                          <card.icon size={22} className={card.iconColor} />
+                        </div>
+                        {card.badge && (
+                          <span className={cn("text-[10px] font-bold px-2.5 py-1 rounded-xl", card.badgeColor)}>
+                            {card.badge}
+                          </span>
+                        )}
+                      </div>
+                      <h3 className="text-base font-bold text-foreground mb-1 group-hover:text-ctu-gold transition-colors">
+                        {card.title}
+                      </h3>
+                      <p className="text-xs text-foreground/50 font-medium leading-relaxed">
+                        {card.subtitle}
+                      </p>
+                      <div className="mt-4 flex items-center gap-1 text-[10px] font-bold text-foreground/25 group-hover:text-ctu-gold/60 transition-colors">
+                        Open <ChevronRight size={12} />
+                      </div>
+                    </motion.button>
+                  ))}
+                </div>
+              </TabsContent>
+
               <TabsContent value="advisor" className="mt-0 space-y-8">
                 <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                   <GlowCard className="lg:col-span-2 p-8" glowColor="orange">

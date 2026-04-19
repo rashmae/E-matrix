@@ -17,6 +17,7 @@ import Profile from './Profile';
 import AdminDashboard from './AdminDashboard';
 import SpotlightDemo from './SpotlightDemo';
 import StudyTools from './StudyTools';
+import StudyNotebook from './StudyNotebook';
 import AIAssistant from './AIAssistant';
 
 export default function App() {
@@ -35,6 +36,7 @@ export default function App() {
         <Route path="/catalog/:id" element={<SubjectDetail />} />
         <Route path="/progress" element={<Progress />} />
         <Route path="/study" element={<StudyTools />} />
+        <Route path="/study/notebook" element={<StudyNotebook />} />
         <Route path="/bulletin" element={<Bulletin />} />
         <Route path="/calendar" element={<Calendar />} />
         <Route path="/resources" element={<Resources />} />

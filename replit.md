@@ -56,6 +56,62 @@ The `vite.config.ts` has custom aliases to handle the flat file structure:
 ## Firebase Configuration
 Firebase is configured via `firebase-applet-config.json` in the root (and mirrored in `src/lib/`).
 
+## Features Implemented (7-Feature Spec)
+
+### Feature 1 — Auth & Session
+- Centralized session via `src/lib/session.ts` (getSession/setSession/updateSession/clearSession)
+- All primary pages use `getSession()` for auth gating
+
+### Feature 2 & 3 — Dashboard Enhancements
+- Debounced search (300ms) filtering the "Recommended for You" scroll row
+- Year level chips (All/1st/2nd/3rd/4th) persisted to `localStorage`
+- Quick filter chips: All Subjects / Favorites / Upcoming / In Progress
+- Heart (favorite) toggle on each subject card, persisted to `localStorage`
+- Empty state with "Clear Filters" button when no results match
+- Clear all filter shortcut
+
+### Feature 3 — Horizontal Scroll Fix
+- Replaced ScrollArea with native `overflow-x-scroll` + CSS scroll-snap
+- Left/right arrow navigation buttons (hidden on mobile, shown on desktop)
+- Scroll state tracking (buttons disable when at edges)
+
+### Feature 4 — Catalog Advanced Filters + Sorting
+- Sort dropdown: Relevance / A→Z / Z→A / Units ↑↓
+- Collapsible filter panel with active filter count badge
+- Semester filter (All / 1st / 2nd / Summer)
+- Units range dual-slider
+- Favorites-only toggle
+- Multi-year selection (independent chips)
+- "Clear all" shortcut
+- Search history persistence + removal
+- Animated results with AnimatePresence
+
+### Feature 5 — Rating Reviewer List (SubjectDetail)
+- Star breakdown bars (clickable → filters reviews modal)
+- 2-review preview inline on the page
+- "See All Reviews" dialog with full reviewer list
+- Star filter chips in the reviews modal (filter by star count)
+- Reviewer cards with avatar, name, date, star display, feedback
+- Anonymous option on rating submission toggle
+- "Rate Subject" + "See All Reviews" button pair
+
+### Feature 6 — Study Hub Redesign
+- Hero section with day streak and completion counters
+- 7-card grid (AI Advisor, Study Notebook NEW, Matrix Map, Study Groups, Q&A Forum, Flashcards, Practice Quiz)
+- Card grid replaces tabs as the hub home; tabs appear only on entering a feature
+- "← Hub" breadcrumb navigation back to home
+- Header hides redundant title when on home tab
+
+### Feature 7 — Study Notebook (NotebookLM-style)
+- Route: `/study/notebook`
+- Three-panel layout: Notebooks sidebar | AI Guide | Q&A Chat
+- Source management: add text/URL sources, enable/disable per-source
+- AI guide generation via Gemini (summary, key topics, definitions, study questions)
+- Grounded Q&A chat — answers cite sources; out-of-scope questions rejected
+- Copy button on AI responses
+- Notebook rename, delete, create
+- Persisted to `localStorage` under `ie_matrix_notebooks`
+
 ## Session Management
 Centralized via `src/lib/session.ts` which exposes:
 - `getSession()` — reads from sessionStorage first, falls back to localStorage

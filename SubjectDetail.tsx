@@ -54,7 +54,19 @@ export default function SubjectDetail() {
   const fileInputRef = React.useRef<HTMLInputElement>(null);
   const [userRating, setUserRating] = useState(0);
   const [feedback, setFeedback] = useState('');
+  const [isAnonymous, setIsAnonymous] = useState(false);
+  const [isReviewsModalOpen, setIsReviewsModalOpen] = useState(false);
+  const [reviewFilterStar, setReviewFilterStar] = useState<number | 'all'>('all');
   const navigate = useNavigate();
+
+  const MOCK_REVIEWS = [
+    { id: '1', name: 'Carla Santos', initials: 'CS', stars: 5, feedback: 'Amazing subject! The professor really explains the concepts well. Very applicable in real IE work.', date: 'Dec 2025' },
+    { id: '2', name: 'Marco Reyes', initials: 'MR', stars: 4, feedback: 'Content is solid but can be overwhelming. Make sure to review your prerequisites before enrolling.', date: 'Nov 2025' },
+    { id: '3', name: 'Anonymous', initials: '?', stars: 5, feedback: 'Best IE subject so far. Loved the real-world case studies.', date: 'Oct 2025' },
+    { id: '4', name: 'Trisha Lim', initials: 'TL', stars: 4, feedback: 'Enjoyed the course. Could use more practice problems, but overall great.', date: 'Sep 2025' },
+    { id: '5', name: 'Anonymous', initials: '?', stars: 3, feedback: 'Average. Not my favorite but important for the board exam.', date: 'Aug 2025' },
+    { id: '6', name: 'Brian Tan', initials: 'BT', stars: 5, feedback: 'Professor makes it engaging. Challenging but worth it.', date: 'Jul 2025' },
+  ];
 
   useEffect(() => {
     const session = localStorage.getItem('ie_matrix_session');
@@ -445,108 +457,247 @@ export default function SubjectDetail() {
 
             {/* Ratings Summary */}
             <section className="space-y-6">
-              <h2 className="text-2xl font-bold text-foreground">Ratings</h2>
+              <div className="flex items-center justify-between">
+                <h2 className="text-2xl font-bold text-foreground">Ratings</h2>
+                <button
+                  onClick={() => setIsReviewsModalOpen(true)}
+                  className="text-xs font-bold text-ctu-gold hover:underline flex items-center gap-1"
+                >
+                  See all reviews <ChevronRight size={14} />
+                </button>
+              </div>
               <Card className="neumorphic-card border-none">
-                <CardContent className="p-8">
-                  <div className="flex items-center gap-6 mb-8">
+                <CardContent className="p-6 sm:p-8">
+                  <div className="flex items-center gap-6 mb-6">
                     <div className="text-5xl font-bold text-foreground">4.2</div>
                     <div className="flex flex-col">
                       <div className="flex text-ctu-gold">
                         {[1, 2, 3, 4, 5].map(i => <Star key={i} size={18} fill={i <= 4 ? "currentColor" : "none"} />)}
                       </div>
-                      <span className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest mt-1">Based on 34 reviews</span>
+                      <span className="text-[10px] text-foreground/40 font-bold uppercase tracking-widest mt-1">Based on {MOCK_REVIEWS.length} reviews</span>
                     </div>
                   </div>
-                  
-                  <div className="space-y-3">
-                    {[5, 4, 3, 2, 1].map(stars => (
-                      <div key={stars} className="flex items-center gap-4 text-[10px] font-bold">
-                        <span className="w-4 text-foreground/40">{stars}</span>
+
+                  {/* Star breakdown bars */}
+                  <div className="space-y-2.5 mb-8">
+                    {[
+                      { stars: 5, count: 3, pct: 60 },
+                      { stars: 4, count: 2, pct: 30 },
+                      { stars: 3, count: 1, pct: 10 },
+                      { stars: 2, count: 0, pct: 0 },
+                      { stars: 1, count: 0, pct: 0 },
+                    ].map(row => (
+                      <button
+                        key={row.stars}
+                        onClick={() => { setReviewFilterStar(row.stars); setIsReviewsModalOpen(true); }}
+                        className="flex items-center gap-3 text-[10px] font-bold w-full group"
+                      >
+                        <span className="w-4 text-foreground/40 shrink-0">{row.stars}</span>
+                        <Star size={10} className="text-ctu-gold fill-ctu-gold shrink-0" />
                         <div className="flex-1 h-2 neumorphic-pressed rounded-full overflow-hidden">
-                          <div 
-                            className="h-full bg-ctu-gold rounded-full shadow-[0_0_8px_rgba(212,160,23,0.4)]" 
-                            style={{ width: `${stars === 5 ? 60 : stars === 4 ? 30 : 5}%` }} 
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${row.pct}%` }}
+                            transition={{ duration: 0.8, delay: (5 - row.stars) * 0.1 }}
+                            className="h-full bg-ctu-gold rounded-full shadow-[0_0_8px_rgba(212,160,23,0.4)] group-hover:brightness-110 transition-all"
                           />
                         </div>
-                        <span className="w-10 text-right text-foreground/40">{stars === 5 ? '60%' : stars === 4 ? '30%' : '5%'}</span>
+                        <span className="w-8 text-right text-foreground/40 shrink-0">{row.count}</span>
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Latest 2 reviews preview */}
+                  <div className="space-y-3 mb-6">
+                    {MOCK_REVIEWS.slice(0, 2).map(r => (
+                      <div key={r.id} className="p-4 rounded-2xl neumorphic-pressed">
+                        <div className="flex items-center gap-3 mb-2">
+                          <div className="w-7 h-7 rounded-full neumorphic-raised flex items-center justify-center text-[10px] font-bold text-ctu-gold bg-ctu-gold/10 shrink-0">
+                            {r.initials}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-bold text-foreground truncate">{r.name}</p>
+                            <p className="text-[10px] text-foreground/30">{r.date}</p>
+                          </div>
+                          <div className="flex text-ctu-gold shrink-0">
+                            {[1,2,3,4,5].map(i => <Star key={i} size={10} fill={i<=r.stars ? "currentColor" : "none"} />)}
+                          </div>
+                        </div>
+                        <p className="text-xs text-foreground/60 leading-relaxed line-clamp-2">{r.feedback}</p>
                       </div>
                     ))}
                   </div>
 
-                  <div className="mt-10">
-                    <button 
+                  <div className="flex gap-3">
+                    <button
+                      onClick={() => setIsReviewsModalOpen(true)}
+                      className="flex-1 py-3 neumorphic-raised hover:neumorphic-pressed rounded-2xl text-foreground/60 font-bold text-sm transition-all"
+                    >
+                      See All Reviews
+                    </button>
+                    <button
                       onClick={() => {
                         if (!arePrerequisitesMet) {
-                          toast.error('You cannot rate this subject until all prerequisites are completed.');
+                          toast.error('Complete prerequisites before rating.');
                         } else {
                           setIsRatingModalOpen(true);
                         }
                       }}
                       className={cn(
-                        "w-full py-4 neumorphic-raised hover:neumorphic-pressed rounded-2xl text-foreground font-bold transition-all",
-                        !arePrerequisitesMet && "opacity-50 cursor-not-allowed grayscale hover:neumorphic-raised"
+                        "flex-1 py-3 bg-ctu-gold text-white font-bold text-sm rounded-2xl transition-all hover:bg-ctu-gold/90",
+                        !arePrerequisitesMet && "opacity-50 cursor-not-allowed"
                       )}
                     >
-                      Rate this Subject
+                      Rate Subject
                     </button>
                   </div>
-
-                  <Dialog open={isRatingModalOpen} onOpenChange={setIsRatingModalOpen}>
-                    <DialogContent className="neumorphic-card border-none text-foreground max-w-md p-0 overflow-hidden">
-                      <div className="p-10 space-y-8">
-                        <DialogHeader>
-                          <ModalTitle className="text-3xl font-bold text-foreground">Rate {subject.name}</ModalTitle>
-                          <ModalDescription className="text-foreground/60 font-medium">
-                            Share your experience with this subject to help other IE students.
-                          </ModalDescription>
-                        </DialogHeader>
-
-                        <div className="space-y-6">
-                          <div className="flex flex-col items-center gap-4">
-                            <p className="text-[10px] font-bold text-ctu-gold uppercase tracking-[2px]">Your Rating</p>
-                            <div className="flex gap-3">
-                              {[1, 2, 3, 4, 5].map((star) => (
-                                <button
-                                  key={star}
-                                  onClick={() => setUserRating(star)}
-                                  className="transition-transform hover:scale-110 active:scale-95 p-1"
-                                >
-                                  <Star 
-                                    size={40} 
-                                    className={cn(
-                                      "transition-colors",
-                                      star <= userRating ? "text-ctu-gold fill-ctu-gold" : "text-foreground/10"
-                                    )} 
-                                  />
-                                </button>
-                              ))}
-                            </div>
-                          </div>
-
-                          <div className="space-y-3">
-                            <p className="text-xs font-bold text-foreground/60 uppercase tracking-widest">Feedback (Optional)</p>
-                            <Textarea 
-                              placeholder="What did you think about the course content, difficulty, or faculty?"
-                              value={feedback}
-                              onChange={(e) => setFeedback(e.target.value)}
-                              className="neumorphic-pressed border-none text-foreground min-h-[140px] focus:ring-ctu-gold rounded-2xl p-5 placeholder:text-foreground/20"
-                            />
-                          </div>
-                        </div>
-
-                        <div className="pt-4">
-                          <button 
-                            onClick={handleSubmitRating}
-                            className="w-full py-4 neumorphic-raised hover:neumorphic-pressed rounded-2xl text-foreground font-bold transition-all"
-                          >
-                            Submit Rating
-                          </button>
-                        </div>
-                      </div>
-                    </DialogContent>
-                  </Dialog>
                 </CardContent>
               </Card>
+
+              {/* Rating Modal */}
+              <Dialog open={isRatingModalOpen} onOpenChange={setIsRatingModalOpen}>
+                <DialogContent className="neumorphic-card border-none text-foreground max-w-md p-0 overflow-hidden">
+                  <div className="p-8 sm:p-10 space-y-6">
+                    <DialogHeader>
+                      <ModalTitle className="text-2xl sm:text-3xl font-bold text-foreground">Rate {subject.name}</ModalTitle>
+                      <ModalDescription className="text-foreground/60 font-medium">
+                        Share your experience to help other IE students.
+                      </ModalDescription>
+                    </DialogHeader>
+
+                    <div className="space-y-5">
+                      <div className="flex flex-col items-center gap-3">
+                        <p className="text-[10px] font-bold text-ctu-gold uppercase tracking-[2px]">Your Rating</p>
+                        <div className="flex gap-2">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onClick={() => setUserRating(star)}
+                              className="transition-transform hover:scale-110 active:scale-95 p-1"
+                            >
+                              <Star
+                                size={36}
+                                className={cn(
+                                  "transition-colors",
+                                  star <= userRating ? "text-ctu-gold fill-ctu-gold" : "text-foreground/10"
+                                )}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <p className="text-xs font-bold text-foreground/60 uppercase tracking-widest">Feedback (Optional)</p>
+                        <Textarea
+                          placeholder="What did you think about the course content, difficulty, or faculty?"
+                          value={feedback}
+                          onChange={(e) => setFeedback(e.target.value)}
+                          className="neumorphic-pressed border-none text-foreground min-h-[100px] focus:ring-ctu-gold rounded-2xl p-4 placeholder:text-foreground/20"
+                        />
+                      </div>
+
+                      {/* Anonymous toggle */}
+                      <label className="flex items-center gap-3 cursor-pointer">
+                        <div
+                          onClick={() => setIsAnonymous(a => !a)}
+                          className={cn(
+                            "w-10 h-5 rounded-full transition-all relative",
+                            isAnonymous ? "bg-ctu-gold" : "neumorphic-pressed"
+                          )}
+                        >
+                          <div className={cn(
+                            "absolute top-0.5 w-4 h-4 rounded-full bg-white shadow-md transition-all",
+                            isAnonymous ? "left-5" : "left-0.5"
+                          )} />
+                        </div>
+                        <span className="text-xs font-bold text-foreground/60">Submit anonymously</span>
+                      </label>
+                    </div>
+
+                    <button
+                      onClick={handleSubmitRating}
+                      className="w-full py-3.5 bg-ctu-gold text-white rounded-2xl font-bold text-sm hover:bg-ctu-gold/90 transition-colors"
+                    >
+                      Submit Rating
+                    </button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
+              {/* Reviews List Modal */}
+              <Dialog open={isReviewsModalOpen} onOpenChange={v => { setIsReviewsModalOpen(v); if (!v) setReviewFilterStar('all'); }}>
+                <DialogContent className="neumorphic-card border-none text-foreground max-w-lg max-h-[85vh] p-0 overflow-hidden flex flex-col">
+                  <div className="p-6 border-b border-foreground/5 shrink-0">
+                    <ModalTitle className="text-xl font-bold text-foreground">Reviews — {subject.name}</ModalTitle>
+                    {/* Star filter chips */}
+                    <div className="flex gap-2 mt-3 flex-wrap">
+                      <button
+                        onClick={() => setReviewFilterStar('all')}
+                        className={cn(
+                          "px-3 py-1.5 rounded-xl text-xs font-bold transition-all",
+                          reviewFilterStar === 'all' ? "bg-ctu-gold text-white" : "neumorphic-raised text-foreground/50"
+                        )}
+                      >
+                        All
+                      </button>
+                      {[5, 4, 3, 2, 1].map(s => (
+                        <button
+                          key={s}
+                          onClick={() => setReviewFilterStar(s)}
+                          className={cn(
+                            "flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-bold transition-all",
+                            reviewFilterStar === s ? "bg-ctu-gold text-white" : "neumorphic-raised text-foreground/50"
+                          )}
+                        >
+                          <Star size={10} fill="currentColor" /> {s}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="overflow-y-auto flex-1 p-5 space-y-4">
+                    {MOCK_REVIEWS
+                      .filter(r => reviewFilterStar === 'all' || r.stars === reviewFilterStar)
+                      .map((r, i) => (
+                        <motion.div
+                          key={r.id}
+                          initial={{ opacity: 0, y: 8 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          transition={{ delay: i * 0.06 }}
+                          className="p-5 rounded-2xl neumorphic-pressed"
+                        >
+                          <div className="flex items-start gap-3 mb-3">
+                            <div className={cn(
+                              "w-9 h-9 rounded-full flex items-center justify-center text-xs font-bold shrink-0",
+                              r.name === 'Anonymous' ? "neumorphic-raised text-foreground/30" : "bg-ctu-gold/15 text-ctu-gold"
+                            )}>
+                              {r.initials}
+                            </div>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center justify-between">
+                                <p className="text-sm font-bold text-foreground">{r.name}</p>
+                                <div className="flex text-ctu-gold">
+                                  {[1,2,3,4,5].map(i => (
+                                    <Star key={i} size={12} fill={i <= r.stars ? "currentColor" : "none"} />
+                                  ))}
+                                </div>
+                              </div>
+                              <p className="text-[10px] text-foreground/30 font-medium">{r.date}</p>
+                            </div>
+                          </div>
+                          <p className="text-sm text-foreground/65 leading-relaxed">{r.feedback}</p>
+                        </motion.div>
+                      ))
+                    }
+                    {MOCK_REVIEWS.filter(r => reviewFilterStar === 'all' || r.stars === reviewFilterStar).length === 0 && (
+                      <div className="text-center py-12 text-foreground/30 text-sm font-medium">
+                        No {reviewFilterStar}-star reviews yet.
+                      </div>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
             </section>
           </div>
         </div>
