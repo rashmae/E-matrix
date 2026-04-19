@@ -14,13 +14,17 @@ import {
   Calendar,
   Hash,
   Loader2,
+  User,
+  ListChecks,
+  Link2,
+  BookMarked,
 } from 'lucide-react';
 import { collection, getDocs, query, orderBy } from 'firebase/firestore';
 import { db } from './firebase';
 import { buildStaticSubjects } from './syllabusData';
 import Sidebar from './Sidebar';
 import BottomNav from './BottomNav';
-import { User } from '@/src/types';
+import { User as UserType } from '@/src/types';
 
 interface SyllabusSubject {
   id: string;
@@ -33,13 +37,16 @@ interface SyllabusSubject {
   syllabusURL: string | null;
   isAvailable: boolean;
   uploadedAt: { seconds: number; nanoseconds: number } | null;
+  prerequisites?: string;
+  instructor?: string;
+  outcomes?: string;
 }
 
 const YEAR_LEVELS = ['All', '1st', '2nd', '3rd', '4th'];
 const TERMS = ['All', '1st Semester', '2nd Semester', 'Summer'];
 
 export default function SyllabusLibrary() {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<UserType | null>(null);
   const [subjects, setSubjects] = useState<SyllabusSubject[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -48,9 +55,10 @@ export default function SyllabusLibrary() {
   const [selectedSubject, setSelectedSubject] = useState<SyllabusSubject | null>(null);
   const [showFilters, setShowFilters] = useState(false);
   const [usingStatic, setUsingStatic] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
-    const stored = localStorage.getItem('user');
+    const stored = localStorage.getItem('ie_matrix_session');
     if (stored) {
       try { setUser(JSON.parse(stored)); } catch {}
     }
@@ -98,6 +106,11 @@ export default function SyllabusLibrary() {
     return acc;
   }, {});
 
+  const handleOpen = (subject: SyllabusSubject) => {
+    setSelectedSubject(subject);
+    setShowInfo(false);
+  };
+
   return (
     <div className="min-h-screen bg-background flex transition-colors duration-300">
       <Sidebar user={user} />
@@ -122,7 +135,6 @@ export default function SyllabusLibrary() {
               </div>
             </div>
 
-            {/* Stats */}
             <div className="flex items-center gap-3">
               <div className="neumorphic-raised px-4 py-2 rounded-2xl flex items-center gap-2">
                 <CheckCircle size={14} className="text-green-500" />
@@ -253,7 +265,7 @@ export default function SyllabusLibrary() {
                       >
                         <SubjectCard
                           subject={subject}
-                          onClick={() => setSelectedSubject(subject)}
+                          onClick={() => handleOpen(subject)}
                         />
                       </motion.div>
                     ))}
@@ -280,25 +292,42 @@ export default function SyllabusLibrary() {
               animate={{ opacity: 1, scale: 1, y: 0 }}
               exit={{ opacity: 0, scale: 0.95, y: 20 }}
               transition={{ type: 'spring', stiffness: 300, damping: 30 }}
-              className="w-full max-w-4xl bg-background rounded-3xl neumorphic-raised overflow-hidden"
+              className="w-full max-w-4xl bg-background rounded-3xl neumorphic-raised overflow-hidden flex flex-col max-h-[90vh]"
               onClick={e => e.stopPropagation()}
             >
               {/* Modal Header */}
-              <div className="flex items-start justify-between p-6 border-b border-foreground/5">
+              <div className="flex items-start justify-between p-5 border-b border-foreground/5 shrink-0">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-ctu-gold to-ctu-maroon flex items-center justify-center">
+                  <div className="w-10 h-10 rounded-2xl bg-gradient-to-br from-ctu-gold to-ctu-maroon flex items-center justify-center shrink-0">
                     <FileText size={18} className="text-white" />
                   </div>
                   <div>
                     <p className="text-xs font-bold uppercase tracking-wider text-ctu-gold">
                       {selectedSubject.subjectCode}
                     </p>
-                    <h3 className="text-lg font-display font-extrabold text-foreground leading-tight">
+                    <h3 className="text-base font-display font-extrabold text-foreground leading-tight">
                       {selectedSubject.subjectName}
                     </h3>
+                    <div className="flex items-center gap-3 mt-1">
+                      <span className="text-[10px] text-foreground/40 font-bold">{selectedSubject.yearLevel} Year</span>
+                      <span className="text-foreground/20">·</span>
+                      <span className="text-[10px] text-foreground/40 font-bold">{selectedSubject.term}</span>
+                      <span className="text-foreground/20">·</span>
+                      <span className="text-[10px] text-foreground/40 font-bold">{selectedSubject.units} units</span>
+                    </div>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 shrink-0">
+                  {selectedSubject.isAvailable && (
+                    <button
+                      onClick={() => setShowInfo(v => !v)}
+                      className={`neumorphic-raised p-2 rounded-xl transition-colors text-xs font-bold flex items-center gap-1 px-3 ${showInfo ? 'text-ctu-gold' : 'text-foreground/40 hover:text-foreground'}`}
+                      title="Show subject info"
+                    >
+                      <BookMarked size={14} />
+                      <span className="hidden sm:inline">Info</span>
+                    </button>
+                  )}
                   {selectedSubject.syllabusURL && (
                     <a
                       href={selectedSubject.syllabusURL.replace('/preview', '/view')}
@@ -320,40 +349,99 @@ export default function SyllabusLibrary() {
               </div>
 
               {/* Modal Body */}
-              {selectedSubject.isAvailable && selectedSubject.syllabusURL ? (
-                <div className="h-[65vh]">
-                  <iframe
-                    src={selectedSubject.syllabusURL}
-                    title={`${selectedSubject.subjectName} Syllabus`}
-                    className="w-full h-full border-0"
-                    allow="autoplay"
-                  />
-                </div>
-              ) : (
-                <div className="flex flex-col items-center justify-center py-20 gap-5 px-6">
-                  <div className="w-16 h-16 rounded-3xl bg-red-500/10 flex items-center justify-center">
-                    <XCircle size={32} className="text-red-400" />
+              <div className="flex-1 overflow-hidden flex flex-col">
+                {selectedSubject.isAvailable && selectedSubject.syllabusURL ? (
+                  <>
+                    {/* Collapsible info panel */}
+                    <AnimatePresence>
+                      {showInfo && (
+                        <motion.div
+                          initial={{ height: 0, opacity: 0 }}
+                          animate={{ height: 'auto', opacity: 1 }}
+                          exit={{ height: 0, opacity: 0 }}
+                          className="overflow-hidden border-b border-foreground/5"
+                        >
+                          <SubjectInfoPanel subject={selectedSubject} />
+                        </motion.div>
+                      )}
+                    </AnimatePresence>
+                    <div className="flex-1 min-h-0" style={{ height: '60vh' }}>
+                      <iframe
+                        src={selectedSubject.syllabusURL}
+                        title={`${selectedSubject.subjectName} Syllabus`}
+                        className="w-full h-full border-0"
+                        allow="autoplay"
+                      />
+                    </div>
+                  </>
+                ) : (
+                  <div className="overflow-y-auto p-6 space-y-5">
+                    <div className="flex flex-col items-center gap-4 py-6 text-center">
+                      <div className="w-14 h-14 rounded-3xl bg-red-500/10 flex items-center justify-center">
+                        <XCircle size={28} className="text-red-400" />
+                      </div>
+                      <div>
+                        <p className="font-display font-extrabold text-foreground text-base">Syllabus Not Yet Available</p>
+                        <p className="text-xs text-foreground/40 mt-1">
+                          The PDF for this subject hasn't been uploaded yet. Check back later or contact the IE Department.
+                        </p>
+                      </div>
+                    </div>
+                    <SubjectInfoPanel subject={selectedSubject} />
                   </div>
-                  <div className="text-center">
-                    <p className="font-display font-extrabold text-foreground text-lg">Syllabus Not Yet Available</p>
-                    <p className="text-sm text-foreground/40 mt-1 max-w-sm">
-                      The syllabus for <strong>{selectedSubject.subjectName}</strong> has not been uploaded yet.
-                      Check back later or contact the IE Department.
-                    </p>
-                  </div>
-                  <div className="neumorphic-raised px-6 py-4 rounded-2xl space-y-1 text-center w-full max-w-xs">
-                    <p className="text-xs text-foreground/30 uppercase tracking-wider font-bold">Subject Info</p>
-                    <p className="text-sm font-bold text-foreground">{selectedSubject.subjectCode}</p>
-                    <p className="text-xs text-foreground/50">{selectedSubject.yearLevel} Year · {selectedSubject.term} · {selectedSubject.units} units</p>
-                  </div>
-                </div>
-              )}
+                )}
+              </div>
             </motion.div>
           </motion.div>
         )}
       </AnimatePresence>
 
       <BottomNav />
+    </div>
+  );
+}
+
+function SubjectInfoPanel({ subject }: { subject: SyllabusSubject }) {
+  return (
+    <div className="p-5 space-y-4 bg-foreground/[0.01]">
+      {subject.description && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <BookOpen size={13} className="text-ctu-gold" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Course Description</p>
+          </div>
+          <p className="text-sm text-foreground/70 leading-relaxed">{subject.description}</p>
+        </div>
+      )}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        {subject.prerequisites && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <Link2 size={13} className="text-ctu-gold" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Prerequisites</p>
+            </div>
+            <p className="text-xs text-foreground/60 font-medium">{subject.prerequisites}</p>
+          </div>
+        )}
+        {subject.instructor && (
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              <User size={13} className="text-ctu-gold" />
+              <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Instructor</p>
+            </div>
+            <p className="text-xs text-foreground/60 font-medium">{subject.instructor}</p>
+          </div>
+        )}
+      </div>
+      {subject.outcomes && (
+        <div className="space-y-1.5">
+          <div className="flex items-center gap-2">
+            <ListChecks size={13} className="text-ctu-gold" />
+            <p className="text-[10px] font-bold uppercase tracking-widest text-foreground/40">Course Outcomes</p>
+          </div>
+          <p className="text-xs text-foreground/60 leading-relaxed">{subject.outcomes}</p>
+        </div>
+      )}
     </div>
   );
 }
@@ -396,6 +484,13 @@ function SubjectCard({ subject, onClick }: { subject: SyllabusSubject; onClick: 
         {subject.subjectName}
       </p>
 
+      {/* Description snippet */}
+      {subject.description && (
+        <p className="text-[11px] text-foreground/40 leading-snug line-clamp-2">
+          {subject.description}
+        </p>
+      )}
+
       {/* Meta */}
       <div className="flex items-center gap-4 text-[11px] text-foreground/40 font-bold">
         <span className="flex items-center gap-1">
@@ -406,6 +501,12 @@ function SubjectCard({ subject, onClick }: { subject: SyllabusSubject; onClick: 
           <BookOpen size={10} />
           {subject.units} units
         </span>
+        {subject.prerequisites && subject.prerequisites !== 'None' && (
+          <span className="flex items-center gap-1 text-ctu-gold/60">
+            <Link2 size={10} />
+            Has prereqs
+          </span>
+        )}
       </div>
 
       {/* CTA */}

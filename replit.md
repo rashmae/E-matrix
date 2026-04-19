@@ -145,8 +145,25 @@ Admin email: `rashmae26@gmail.com`
 - **Static fallback**: `syllabusData.ts` provides the full curriculum list + 15 PDF file IDs immediately without Firestore
 - **Firestore upgrade**: Admin can seed the `subjects` collection via the Admin Portal Seed button
 - PDF previews rendered in-app using Google Drive `/preview` embed URLs
-- 15 syllabi already mapped to Google Drive file IDs in `syllabusData.ts` (PDF_MAP)
+- 15 syllabi mapped to Google Drive file IDs in `syllabusData.ts` (PDF_MAP)
 - To activate live Firestore data: (1) deploy updated `firestore.rules` via Firebase Console, (2) log in as admin and click "Seed Subjects to Firestore" in Admin Portal
+
+### Syllabus PDF Extraction (completed April 2026)
+All 15 Google Drive PDFs were downloaded and parsed using pdfjs-dist. Extracted data:
+- **BES-CFP**: Computer Fundamentals & Programming — corrected to 3 units
+- **IE-IPC 111**: Introduction to Engineering — real description + instructor extracted
+- **IE-TECH 111**: Pneumatics & PLC — real description + CLOs extracted
+- **EPHYS / EPHYSL**: Physics for Engineers (CIT-U format) — real description + instructor extracted
+- **IE-PC 212 / 212L**: Industrial Materials & Processes — real description + instructor extracted
+- **GEC-LWR / GEC-TCW**: File IDs were SWAPPED in Drive; corrected in PDF_MAP
+- **IE-PC 3112**: Corrected name: Operations Management 1 (was "Operations Research 1")
+- **IE-AC 313**: Corrected name: Managerial Accounting (was "Safety Management")
+- **IE-PC 3110**: Corrected name: Quality Management System (was "Facilities Planning")
+- **IE-PC 3214**: Corrected name: Operations Management 2 (was "Supply Chain Mgmt"), 4 units (was 3)
+- **IE-AC 111 / IE-AC 314**: Scanned PDFs (no extractable text) — Drive URL preserved
+- `SubjectEntry` interface extended with `prerequisites`, `instructor`, `outcomes` fields
+- All 68 subjects now have `prerequisites` populated in SUBJECTS_DATA
+- Modal UI updated: description + prerequisites shown on cards; "Info" panel in PDF modal
 
 ## Security
 - `firestore.rules` enforces: authentication, data ownership, yearLevel validation, role protection
